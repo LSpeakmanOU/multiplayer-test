@@ -2,17 +2,18 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "message_format.h"
 #include <cstring>
 #include <strings.h>
+#include "message_format.h"
+#include "game_context.h"
+
 using namespace std;
 
 int main(int argc, char* argv[]){
     packet datasend;
-    datasend.type = 0x1234C0FE;
+    player_data my_data;
     datasend.message = (char*)malloc(MESSAGE_LEN);
-    cout << datasend.type << endl;
-    strncpy(datasend.message, "Hello world!", MESSAGE_LEN );
+    bzero(datasend.message, MESSAGE_LEN);
     int c_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(c_fd == -1){
         perror("socket");
@@ -33,8 +34,12 @@ int main(int argc, char* argv[]){
         perror("connect");
         exit(EXIT_FAILURE);
     }
-    
-    //int s_val = send(c_fd, hello.c_str(), hello.length(), 0);
+    string input;
+    // First ask user what their name is upon logging in
+    datasend.type = INTRO;
+    cout << "What is your name?" << endl;
+    getline(cin, input);
+    strncpy(datasend.message, input.c_str(), input.length());
     char* serialized_msg = serialize(datasend);
     int s_val = send(c_fd, serialized_msg, 1024, 0);
     if(s_val == -1){
@@ -42,15 +47,30 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
     delete[] serialized_msg;
-    cout << "Message sent" << endl;
-    bzero(buffer, 1024); // zero buffer
-    buff_msg_size = read(c_fd, buffer, 1024 - 1); // subtract 1 for the null terminator at the end
-    if(buff_msg_size == -1){
-        perror("read");
-        exit(EXIT_FAILURE);
+    my_data.name = input;
+    getline(cin, input);
+    while(input != "exit"){
+        datasend.type = SAY;
+        // Zero message container, fill it with the input, send it
+        bzero(datasend.message, MESSAGE_LEN);
+        strncpy(datasend.message, input.c_str(), input.length());
+        char* serialized_msg = serialize(datasend);
+        int s_val = send(c_fd, serialized_msg, 1024, 0);
+        if(s_val == -1){
+            perror("send");
+            exit(EXIT_FAILURE);
+        }
+        delete[] serialized_msg;
+        bzero(buffer, 1024); // zero buffer
+        buff_msg_size = read(c_fd, buffer, 1024);
+        if(buff_msg_size == -1){
+            perror("read");
+            exit(EXIT_FAILURE);
+        }
+        cout << buffer << endl;
+        getline(cin, input);
     }
-    cout << buffer << endl;
- 
+    cout << "Goodbye!" << endl;
     // closing the connected socket
     close(c_fd);
     return EXIT_SUCCESS;

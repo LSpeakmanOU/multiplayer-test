@@ -1,12 +1,12 @@
-#ifndef MSG_FMT
-#define MSG_FMT
+#ifndef MSG_FMT_H
+#define MSG_FMT_H
 #define MESSAGE_LEN 1020
 #include <cstdlib>
 #include <iostream>
 using namespace std;
 enum packet_type{
     SAY,
-    EXIT,
+    INTRO,
 };
 struct packet{
     int type;

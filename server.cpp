@@ -5,8 +5,10 @@
 #include <thread>
 #include <sys/time.h>
 #include <vector>
-#include "message_format.h"
 #include <strings.h>
+#include "message_format.h"
+#include "game_context.h"
+
 using namespace std;
 
 int main(int argc, char* argv[]){
@@ -30,6 +32,7 @@ int main(int argc, char* argv[]){
     temp_address.sin_addr.s_addr = inet_addr("127.0.0.1");
 	temp_address.sin_port = htons(25565);
     vector<int> clients;
+    vector<player_data*> players;
     int b_val = bind(s_fd, (sockaddr *)&temp_address, sizeof(temp_address));
     if(b_val == -1){
         perror("bind");
@@ -79,8 +82,10 @@ int main(int argc, char* argv[]){
                 perror("send");
                 exit(EXIT_FAILURE);
             }
-            // Add to client FD list
+            // Add to client FD list and add new player data object
             clients.push_back(new_c_fd);
+            player_data* temp_pd = new player_data();
+            players.push_back(temp_pd);
         }
         // If its not the master socket, its a client
         for(int i = 0;i<clients.size();i++)
@@ -96,20 +101,37 @@ int main(int argc, char* argv[]){
                     perror("read");
                     exit(EXIT_FAILURE);
                 }
-                // If closing, remove client
-                // Otherwise, handle message
+                // Handle message if length is greater than zero, otherwise the client disconnected
                 if(buff_msg_size > 0){
+                    // Deserialize message, process it, then delete it
                     packet* new_msg = deserialize(buffer);
-                    cout << (unsigned int)new_msg->type << endl;
-                    for(int i = 0;i<MESSAGE_LEN;i++)
-                        cout << new_msg->message[i];
-                    cout << endl;
+                    switch(new_msg->type){
+                        case SAY:
+                            cout << players[i]->name << ": ";
+                            for(int i = 0;i<MESSAGE_LEN;i++)
+                                cout << new_msg->message[i];
+                            cout << endl;
+                            break;
+                        case INTRO:
+                            players[i]->name = string(new_msg->message);
+                            break;
+                        default:
+                            break;
+                    }
+                    // Delete deserialized object
+                    delete[] new_msg->message;
+                    delete new_msg;
+                    
                 }
-                if(buff_msg_size == 0 ){
+                if(buff_msg_size == 0){
                     getpeername(curr_fd, (struct sockaddr*)&temp_address, (socklen_t*)&addrlen); 
                     cout << "Client Disconnected: " << inet_ntoa(temp_address.sin_addr) << ":" << ntohs(temp_address.sin_port) << endl;
                     close(curr_fd);
                     clients.erase(clients.begin()+i);
+                    // Delete player data
+                    player_data* temp_pd = players[i];
+                    players.erase(players.begin()+i);
+                    delete temp_pd;
                 }
             }
         }
