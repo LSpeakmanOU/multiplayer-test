@@ -4,6 +4,10 @@
 #include <cstdlib>
 #include <iostream>
 using namespace std;
+enum packet_type{
+    SAY,
+    EXIT,
+};
 struct packet{
     int type;
     char* message;
