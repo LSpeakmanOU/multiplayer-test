@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #include <vector>
 #include "message_format.h"
-
+#include <strings.h>
 using namespace std;
 
 int main(int argc, char* argv[]){
@@ -89,7 +89,8 @@ int main(int argc, char* argv[]){
             // Check for if FD is ready
             // 2 cases, closing and IO
             if(FD_ISSET(curr_fd, &readfds)){
-                // Closing
+                // Unwrap message, if size = 0 then you are closing, otherwise its a message
+                bzero(buffer, 1024); // zero buffer
                 buff_msg_size = read(new_c_fd, buffer, 1024);
                 if(buff_msg_size == -1){
                     perror("read");

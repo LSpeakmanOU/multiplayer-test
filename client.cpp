@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include "message_format.h"
 #include <cstring>
-
+#include <strings.h>
 using namespace std;
 
 int main(int argc, char* argv[]){
@@ -13,11 +13,6 @@ int main(int argc, char* argv[]){
     datasend.message = (char*)malloc(MESSAGE_LEN);
     cout << datasend.type << endl;
     strncpy(datasend.message, "Hello world!", MESSAGE_LEN );
-    
-    /**for(int i = 0;i<MESSAGE_LEN;i++)
-        cout << datasend.message[i];
-    cout << endl;*/
-    datasend.message[0] = 'H';
     int c_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(c_fd == -1){
         perror("socket");
@@ -48,6 +43,7 @@ int main(int argc, char* argv[]){
     }
     delete[] serialized_msg;
     cout << "Message sent" << endl;
+    bzero(buffer, 1024); // zero buffer
     buff_msg_size = read(c_fd, buffer, 1024 - 1); // subtract 1 for the null terminator at the end
     if(buff_msg_size == -1){
         perror("read");
