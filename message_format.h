@@ -7,9 +7,9 @@ using namespace std;
 enum packet_type{
     SAY,
     INTRO,
-    UPDATE_PLAYER_LIST, // For server to send a full player list as soon as a new client checks in
     GOODBYE,
-    GOODBYE_ACK
+    GOODBYE_ACK,
+    SERVER_GREETING,
 };
 struct packet{
     int type;

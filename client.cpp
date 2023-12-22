@@ -116,7 +116,7 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
     delete[] serialized_msg;
-
+    delete[] datasend.message;
     cout << "Goodbye!" << endl;
     Running=false;
     server_listener.join();

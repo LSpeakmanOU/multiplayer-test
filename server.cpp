@@ -6,20 +6,19 @@
 #include <sys/time.h>
 #include <vector>
 #include <strings.h>
+#include <string.h>
 #include "message_format.h"
 #include "game_context.h"
 
 using namespace std;
 
-void handle_disconnect(int fd, int fd_idx, sockaddr_in &temp_address, socklen_t &addrlen, vector<int> &clients, vector<player_data*> &players){
+void handle_disconnect(int fd, int fd_idx, sockaddr_in &temp_address, socklen_t &addrlen, vector<int> &clients, vector<player_data> &players){
     getpeername(fd, (struct sockaddr*)&temp_address, (socklen_t*)&addrlen); 
     cout << "Client Disconnected: " << inet_ntoa(temp_address.sin_addr) << ":" << ntohs(temp_address.sin_port) << endl;
     close(fd);
     clients.erase(clients.begin()+fd_idx);
     // Delete player data
-    player_data* temp_pd = players[fd_idx];
     players.erase(players.begin()+fd_idx);
-    delete temp_pd;
 }
 void broadcast(int source_fd, const vector<int> &clients, packet* msg){
     char* msg_to_send = serialize(*msg);
@@ -30,12 +29,12 @@ void broadcast(int source_fd, const vector<int> &clients, packet* msg){
                 perror("send");
                 exit(EXIT_FAILURE);
             }
-            delete[] msg_to_send;
         }
     }   
+    delete[] msg_to_send;
 }
-void send_msg(int to_fd, packet* msg){
-    char* msg_to_send = serialize(*msg);
+void send_msg(int to_fd, packet &msg){
+    char* msg_to_send = serialize(msg);
     int send_val = send(to_fd, msg_to_send, 1024, 0);
     if(send_val == -1){
         perror("send");
@@ -64,13 +63,17 @@ int main(int argc, char* argv[]){
     temp_address.sin_addr.s_addr = inet_addr("127.0.0.1");
 	temp_address.sin_port = htons(25565);
     vector<int> clients;
-    vector<player_data*> players;
+    vector<player_data> players;
+    packet datasend;
+    datasend.message = (char*)malloc(MESSAGE_LEN);
+    bzero(datasend.message, MESSAGE_LEN);
+
     int b_val = bind(s_fd, (sockaddr *)&temp_address, sizeof(temp_address));
     if(b_val == -1){
         perror("bind");
         exit(EXIT_FAILURE);
     }
-    int l_val = listen(s_fd, 3); // 3 simultaneous connection queue
+    int l_val = listen(s_fd, 10); // 3 simultaneous connection queue
     if(l_val == -1){
         perror("listen");
         exit(EXIT_FAILURE);
@@ -109,14 +112,21 @@ int main(int argc, char* argv[]){
             }
             // Send welcome message
             cout << "Client Connected: " << inet_ntoa(temp_address.sin_addr) << ":" << ntohs(temp_address.sin_port) << endl;
-            int send_val = send(new_c_fd, hello.c_str(), hello.length(), 0);
-            if(send_val == -1){
-                perror("send");
-                exit(EXIT_FAILURE);
+            // int send_val = send(new_c_fd, hello.c_str(), hello.length(), 0);
+            // if(send_val == -1){
+            //     perror("send");
+            //     exit(EXIT_FAILURE);
+            // }
+            for(int i = 0;i < clients.size();i++){
+                ///datasend.type = INTRO;
+                //bzero(datasend.message, MESSAGE_LEN);
+                //strncpy(datasend.message, players[i]->name.c_str(), players[i]->name.length());
+                //cout << datasend.message << endl;
+                //send_msg(new_c_fd, &datasend);
             }
             // Add to client FD list and add new player data object
             clients.push_back(new_c_fd);
-            player_data* temp_pd = new player_data();
+            player_data temp_pd = player_data();
             players.push_back(temp_pd);
         }
         // If its not the master socket, its a client
@@ -139,7 +149,7 @@ int main(int argc, char* argv[]){
                     packet* new_msg = deserialize(buffer);
                     switch(new_msg->type){
                         case SAY:
-                            cout << players[i]->name << ": ";
+                            cout << players[i].name << ": ";
                             for(int i = 0;i<MESSAGE_LEN;i++)
                                 cout << new_msg->message[i];
                             cout << endl;
@@ -147,14 +157,14 @@ int main(int argc, char* argv[]){
                             broadcast(curr_fd, clients, new_msg);
                             break;
                         case INTRO:
-                            players[i]->name = string(new_msg->message);
+                            players[i].name = string(new_msg->message);
                             new_msg->from = curr_fd;
                             broadcast(curr_fd, clients, new_msg);
                             break;
                         case GOODBYE:
                             new_msg->type = GOODBYE_ACK;
                             new_msg->from = curr_fd;
-                            send_msg(curr_fd, new_msg);
+                            send_msg(curr_fd, *new_msg);
                             new_msg->type = GOODBYE;
                             broadcast(curr_fd, clients, new_msg);
                             break;
@@ -172,5 +182,7 @@ int main(int argc, char* argv[]){
         }
     }
     close(s_fd);
+    delete[] datasend.message;
+
     return EXIT_SUCCESS;
 }
