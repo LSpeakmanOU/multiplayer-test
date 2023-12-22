@@ -83,10 +83,9 @@ int main(int argc, char* argv[]){
     string hello = "Hello from client";
     sockaddr_in server;
     server.sin_family = AF_INET;
-    //server.sin_addr.s_addr = inet_addr("127.0.0.1");???
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     server.sin_port = htons(25565);
-    //inet_pton(AF_INET, "127.0.0.1", &server.sin_addr)
     int status = connect(c_fd, (struct sockaddr*)&server, sizeof(server));
     if(status == -1){
         perror("connect");
