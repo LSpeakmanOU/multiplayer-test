@@ -4,6 +4,7 @@
 #include <map>
 
 using namespace std;
+
 enum locations{
     INVALID_LOCATION,
     VILLAGE,
@@ -22,6 +23,13 @@ struct player_data{
     string name;
     int location = VILLAGE;
 };
+
+string get_location(int loc);
+int get_loc_id(string loc);
+int get_action(string loc);
+void who(const map<int, player_data> &players);
+void help();
+
 
 const string village_overview = "A small village with a mage shop.";
 const vector<string> village_options{"mage store"};
@@ -72,6 +80,7 @@ const vector<string> robe_dialogue = {
     " ",
     "."
 };
+
 void help(){
     cout << "Here is the list of commands available:" << endl;
     cout << "say <message> - sends a message to all users in the space" << endl;
@@ -81,11 +90,13 @@ void help(){
     cout << "help - lists available commands" << endl;
     cout << "exit - leave the game" << endl;
 }
+
 void who(const map<int, player_data> &players){
     for(const auto& p : players){
-        cout << p.second.name << "\t" << p.second.location << endl;
+        cout << p.second.name << "\t" << get_location(p.second.location) << endl;
     }
 }
+
 int get_action(string loc){
     if(loc == "say"){
         return SAY_ACTION;
@@ -102,12 +113,24 @@ int get_action(string loc){
     }
     return INVALID_ACTION;
 }
-int get_location(string loc){
+
+int get_loc_id(string loc){
     if(loc == "village"){
         return VILLAGE;
     }else if(loc == "mage store"){
         return MAGE_STORE;
     }
     return INVALID_LOCATION;
+}
+string get_location(int loc){
+    switch(loc){
+        case VILLAGE:
+            return "Village";
+        case MAGE_STORE:
+            return "Mage Store";
+        case INVALID_LOCATION:
+        default:
+            return "The void";
+    }
 }
 #endif

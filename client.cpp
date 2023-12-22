@@ -125,12 +125,12 @@ int main(int argc, char* argv[]){
                 if(tokens.size() == 1)
                     break;
                 temp_string = input.substr(input.find(" ") + 1);
-                int loc_temp = get_location(temp_string);
-                if(loc_temp == INVALID_LOCATION)
+                int loc_id = get_loc_id(temp_string);
+                if(loc_id == INVALID_LOCATION)
                     break;
                 datasend.type = ENTER_MSG;
                 bzero(datasend.message, MESSAGE_LEN);
-                serialize_int(temp_byte_arr, loc_temp);
+                serialize_int(temp_byte_arr, loc_id);
                 // Send 1 int over as the message(location)
                 strncpy(datasend.message, temp_byte_arr, 4);
                 send_msg(c_fd, datasend);
