@@ -33,15 +33,7 @@ void broadcast(int source_fd, const vector<int> &clients, packet* msg){
     }   
     delete[] msg_to_send;
 }
-void send_msg(int to_fd, packet &msg){
-    char* msg_to_send = serialize(msg);
-    int send_val = send(to_fd, msg_to_send, 1024, 0);
-    if(send_val == -1){
-        perror("send");
-        exit(EXIT_FAILURE);
-    }
-    delete[] msg_to_send;
-}
+
 int main(int argc, char* argv[]){
     int s_fd = socket(AF_INET, SOCK_STREAM, 0);
     fd_set readfds;
@@ -113,7 +105,7 @@ int main(int argc, char* argv[]){
             // Send welcome message + player list
             cout << "Client Connected: " << inet_ntoa(temp_address.sin_addr) << ":" << ntohs(temp_address.sin_port) << endl;
             for(int i = 0;i < clients.size();i++){
-                datasend.type = INTRO;
+                datasend.type = INTRO_MSG;
                 datasend.from = clients[i];
                 bzero(datasend.message, MESSAGE_LEN);
                 strncpy(datasend.message, players[i].name.c_str(), players[i].name.length());
@@ -143,7 +135,7 @@ int main(int argc, char* argv[]){
                     // Deserialize message, process it, then delete it
                     packet* new_msg = deserialize(buffer);
                     switch(new_msg->type){
-                        case SAY:
+                        case SAY_MSG:
                             cout << players[i].name << ": ";
                             for(int i = 0;i<MESSAGE_LEN;i++)
                                 cout << new_msg->message[i];
@@ -151,18 +143,27 @@ int main(int argc, char* argv[]){
                             new_msg->from = curr_fd;
                             broadcast(curr_fd, clients, new_msg);
                             break;
-                        case INTRO:
+                        case INTRO_MSG:
                             players[i].name = string(new_msg->message);
                             new_msg->from = curr_fd;
                             broadcast(curr_fd, clients, new_msg);
                             break;
-                        case GOODBYE:
-                            new_msg->type = GOODBYE_ACK;
+                        case GOODBYE_MSG:
+                            // Acknowledge player's exit message
+                            // Used in killing player's application
+                            new_msg->type = GOODBYE_ACK_MSG;
                             new_msg->from = curr_fd;
                             send_msg(curr_fd, *new_msg);
-                            new_msg->type = GOODBYE;
+                            // Send goodbye message to all players
+                            new_msg->type = GOODBYE_MSG;
                             broadcast(curr_fd, clients, new_msg);
                             break;
+                        case ENTER_MSG:
+                            // Update player's location
+                            players[i].location = deserialize_int(new_msg->message);
+                            // Update all players' location information for current player
+                            new_msg->from = curr_fd;
+                            broadcast(curr_fd, clients, new_msg);
                         default:
                             break;
                     }

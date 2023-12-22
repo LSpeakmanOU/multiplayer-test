@@ -1,10 +1,22 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 #include <string>
+#include <map>
+
 using namespace std;
 enum locations{
+    INVALID_LOCATION,
     VILLAGE,
     MAGE_STORE,
+};
+enum action_type{
+    INVALID_ACTION,
+    SAY_ACTION,
+    INSPECT_ACTION,
+    ENTER_ACTION,
+    LOOK_ACTION,
+    HELP_ACTION,
+    WHO_ACTION,
 };
 struct player_data{
     string name;
@@ -60,5 +72,42 @@ const vector<string> robe_dialogue = {
     " ",
     "."
 };
-
+void help(){
+    cout << "Here is the list of commands available:" << endl;
+    cout << "say <message> - sends a message to all users in the space" << endl;
+    cout << "inspect <object/area> - allows to inspect items/areas within a given location" << endl;\
+    cout << "enter <location> - moves player into a different location" << endl;
+    cout << "look - describes the area you are in" << endl;
+    cout << "help - lists available commands" << endl;
+    cout << "exit - leave the game" << endl;
+}
+void who(const map<int, player_data> &players){
+    for(const auto& p : players){
+        cout << p.second.name << "\t" << p.second.location << endl;
+    }
+}
+int get_action(string loc){
+    if(loc == "say"){
+        return SAY_ACTION;
+    }else if(loc == "inspect"){
+        return INSPECT_ACTION;
+    }else if(loc == "enter"){
+        return ENTER_ACTION;
+    }else if(loc == "look"){
+        return LOOK_ACTION;
+    }else if(loc == "help"){
+        return HELP_ACTION;
+    }else if(loc == "who"){
+        return WHO_ACTION;
+    }
+    return INVALID_ACTION;
+}
+int get_location(string loc){
+    if(loc == "village"){
+        return VILLAGE;
+    }else if(loc == "mage store"){
+        return MAGE_STORE;
+    }
+    return INVALID_LOCATION;
+}
 #endif
