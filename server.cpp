@@ -11,6 +11,38 @@
 
 using namespace std;
 
+void handle_disconnect(int fd, int fd_idx, sockaddr_in &temp_address, socklen_t &addrlen, vector<int> &clients, vector<player_data*> &players){
+    getpeername(fd, (struct sockaddr*)&temp_address, (socklen_t*)&addrlen); 
+    cout << "Client Disconnected: " << inet_ntoa(temp_address.sin_addr) << ":" << ntohs(temp_address.sin_port) << endl;
+    close(fd);
+    clients.erase(clients.begin()+fd_idx);
+    // Delete player data
+    player_data* temp_pd = players[fd_idx];
+    players.erase(players.begin()+fd_idx);
+    delete temp_pd;
+}
+void broadcast(int source_fd, const vector<int> &clients, packet* msg){
+    char* msg_to_send = serialize(*msg);
+    for(int i = 0;i<clients.size();i++){
+        if(clients[i] != source_fd){
+            int send_val = send(clients[i], msg_to_send, 1024, 0);
+            if(send_val == -1){
+                perror("send");
+                exit(EXIT_FAILURE);
+            }
+            delete[] msg_to_send;
+        }
+    }   
+}
+void send_msg(int to_fd, packet* msg){
+    char* msg_to_send = serialize(*msg);
+    int send_val = send(to_fd, msg_to_send, 1024, 0);
+    if(send_val == -1){
+        perror("send");
+        exit(EXIT_FAILURE);
+    }
+    delete[] msg_to_send;
+}
 int main(int argc, char* argv[]){
     int s_fd = socket(AF_INET, SOCK_STREAM, 0);
     fd_set readfds;
@@ -96,7 +128,7 @@ int main(int argc, char* argv[]){
             if(FD_ISSET(curr_fd, &readfds)){
                 // Unwrap message, if size = 0 then you are closing, otherwise its a message
                 bzero(buffer, 1024); // zero buffer
-                buff_msg_size = read(new_c_fd, buffer, 1024);
+                buff_msg_size = read(curr_fd, buffer, 1024);
                 if(buff_msg_size == -1){
                     perror("read");
                     exit(EXIT_FAILURE);
@@ -111,9 +143,20 @@ int main(int argc, char* argv[]){
                             for(int i = 0;i<MESSAGE_LEN;i++)
                                 cout << new_msg->message[i];
                             cout << endl;
+                            new_msg->from = curr_fd;
+                            broadcast(curr_fd, clients, new_msg);
                             break;
                         case INTRO:
                             players[i]->name = string(new_msg->message);
+                            new_msg->from = curr_fd;
+                            broadcast(curr_fd, clients, new_msg);
+                            break;
+                        case GOODBYE:
+                            new_msg->type = GOODBYE_ACK;
+                            new_msg->from = curr_fd;
+                            send_msg(curr_fd, new_msg);
+                            new_msg->type = GOODBYE;
+                            broadcast(curr_fd, clients, new_msg);
                             break;
                         default:
                             break;
@@ -123,16 +166,8 @@ int main(int argc, char* argv[]){
                     delete new_msg;
                     
                 }
-                if(buff_msg_size == 0){
-                    getpeername(curr_fd, (struct sockaddr*)&temp_address, (socklen_t*)&addrlen); 
-                    cout << "Client Disconnected: " << inet_ntoa(temp_address.sin_addr) << ":" << ntohs(temp_address.sin_port) << endl;
-                    close(curr_fd);
-                    clients.erase(clients.begin()+i);
-                    // Delete player data
-                    player_data* temp_pd = players[i];
-                    players.erase(players.begin()+i);
-                    delete temp_pd;
-                }
+                if(buff_msg_size == 0)
+                    handle_disconnect(curr_fd, i, temp_address, addrlen, clients, players);
             }
         }
     }
