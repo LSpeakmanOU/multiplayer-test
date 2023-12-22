@@ -110,19 +110,14 @@ int main(int argc, char* argv[]){
                 perror("accept");
                 exit(EXIT_FAILURE);
             }
-            // Send welcome message
+            // Send welcome message + player list
             cout << "Client Connected: " << inet_ntoa(temp_address.sin_addr) << ":" << ntohs(temp_address.sin_port) << endl;
-            // int send_val = send(new_c_fd, hello.c_str(), hello.length(), 0);
-            // if(send_val == -1){
-            //     perror("send");
-            //     exit(EXIT_FAILURE);
-            // }
             for(int i = 0;i < clients.size();i++){
-                ///datasend.type = INTRO;
-                //bzero(datasend.message, MESSAGE_LEN);
-                //strncpy(datasend.message, players[i]->name.c_str(), players[i]->name.length());
-                //cout << datasend.message << endl;
-                //send_msg(new_c_fd, &datasend);
+                datasend.type = INTRO;
+                datasend.from = clients[i];
+                bzero(datasend.message, MESSAGE_LEN);
+                strncpy(datasend.message, players[i].name.c_str(), players[i].name.length());
+                send_msg(new_c_fd, datasend);
             }
             // Add to client FD list and add new player data object
             clients.push_back(new_c_fd);
