@@ -98,13 +98,8 @@ int main(int argc, char* argv[]){
     cout << "What is your name?" << endl;
     getline(cin, input);
     strncpy(datasend.message, input.c_str(), input.length());
-    char* serialized_msg = serialize(datasend);
-    int s_val = send(c_fd, serialized_msg, 1024, 0);
-    if(s_val == -1){
-        perror("send");
-        exit(EXIT_FAILURE);
-    }
-    delete[] serialized_msg;
+    send_msg(c_fd,datasend);
+
     my_data.name = input;
     getline(cin, input);
     string temp_string;
@@ -158,13 +153,8 @@ int main(int argc, char* argv[]){
     }
     datasend.type = GOODBYE_MSG;
     bzero(datasend.message, MESSAGE_LEN);
-    serialized_msg = serialize(datasend);
-    s_val = send(c_fd, serialized_msg, 1024, 0);
-    if(s_val == -1){
-        perror("send");
-        exit(EXIT_FAILURE);
-    }
-    delete[] serialized_msg;
+    send_msg(c_fd, datasend);
+    
     delete[] datasend.message;
     cout << "Goodbye!" << endl;
     Running=false;
