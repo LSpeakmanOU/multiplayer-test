@@ -82,6 +82,7 @@ const vector<string> robe_dialogue = {
 };
 
 void help(){
+    cout << "=============================" << endl;
     cout << "Here is the list of commands available:" << endl;
     cout << "say <message> - sends a message to all users in the space" << endl;
     cout << "inspect <object/area> - allows to inspect items/areas within a given location" << endl;\
@@ -89,12 +90,65 @@ void help(){
     cout << "look - describes the area you are in" << endl;
     cout << "help - lists available commands" << endl;
     cout << "exit - leave the game" << endl;
+    cout << "=============================" << endl;
 }
 
+vector<string> get_inspects(int loc_id){
+    switch(loc_id){
+        case VILLAGE:
+            return village_inspects;
+        case MAGE_STORE:
+            return mage_store_inspects;
+        case INVALID_LOCATION:
+        default:
+            return vector<string>{"bolts of light"};
+    }
+}
+vector<string> enter_options(int loc_id){
+    switch(loc_id){
+        case VILLAGE:
+            return village_options;
+        case MAGE_STORE:
+            return mage_store_options;
+        case INVALID_LOCATION:
+        default:
+            return vector<string>{"village"};
+    }
+}
+void look(int loc_id){
+    cout << "=============================" << endl;
+    switch(loc_id){
+        case VILLAGE:
+            cout << village_overview << endl;
+            break;
+        case MAGE_STORE:
+            cout << mage_store_overview << endl;
+            break;
+        case INVALID_LOCATION:
+        default:
+            cout << "Somehow you have entered the void. You feel disoriented as you "
+            "float in an expanse of gray. Bolts of light whiz by you. Despite never being here"
+            "You feel as if letting these bolts touch you could permanantly change and damage you. "
+            "Might be best to try and get out of here." << endl;
+            break;
+    }
+    cout << "Here is what you can inspect around you:" << endl;
+    vector<string> inspects = get_inspects(loc_id);
+    vector<string> options = enter_options(loc_id);
+    for(int i = 0;i<inspects.size();i++)
+        cout << inspects[i] << endl;
+    
+    cout << "Here is what locations you can see:" << endl;
+    for(int i = 0;i<options.size();i++)
+        cout << options[i] << endl;
+    cout << "=============================" << endl;
+}
 void who(const map<int, player_data> &players){
+    cout << "=============================" << endl;
     for(const auto& p : players){
         cout << p.second.name << "\t" << get_location(p.second.location) << endl;
     }
+    cout << "=============================" << endl;
 }
 
 int get_action(string loc){

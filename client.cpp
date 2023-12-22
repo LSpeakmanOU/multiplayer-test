@@ -128,6 +128,7 @@ int main(int argc, char* argv[]){
                 int loc_id = get_loc_id(temp_string);
                 if(loc_id == INVALID_LOCATION)
                     break;
+                my_data.location = loc_id;
                 datasend.type = ENTER_MSG;
                 bzero(datasend.message, MESSAGE_LEN);
                 serialize_int(temp_byte_arr, loc_id);
@@ -137,6 +138,7 @@ int main(int argc, char* argv[]){
                 break;
             }
             case LOOK_ACTION:
+                look(my_data.location);
                 break;
             case HELP_ACTION:
                 help();
