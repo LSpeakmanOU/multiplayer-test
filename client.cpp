@@ -6,12 +6,24 @@
 #include <strings.h>
 #include <thread>
 #include <map>
+#include <vector>
 #include "message_format.h"
 #include "game_context.h"
 
 using namespace std;
 bool Running = true;
-
+vector<string> collect_tokens(const string &input_str){
+    vector<string> result;
+    string curr_str = input_str;
+    std::size_t found = curr_str.find(" ");
+    while(found != string::npos){
+        result.push_back(curr_str.substr(0, found));
+        curr_str = curr_str.substr(found+1);
+        found = curr_str.find(" ");
+    }
+    result.push_back(curr_str);
+    return result;
+}
 void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
     char buffer[1024] = { 0 };
     ssize_t buff_msg_size;
@@ -93,18 +105,27 @@ int main(int argc, char* argv[]){
     delete[] serialized_msg;
     my_data.name = input;
     getline(cin, input);
+    string temp_string;
     while(input != "exit"){
-        datasend.type = SAY;
-        // Zero message container, fill it with the input, send it
-        bzero(datasend.message, MESSAGE_LEN);
-        strncpy(datasend.message, input.c_str(), input.length());
-        char* serialized_msg = serialize(datasend);
-        int s_val = send(c_fd, serialized_msg, 1024, 0);
-        if(s_val == -1){
-            perror("send");
-            exit(EXIT_FAILURE);
+        vector<string> tokens = collect_tokens(input);
+        if(tokens[0] == "say")
+        {
+            if(tokens.size() == 1)
+                continue;
+            temp_string = input.substr(input.find(" ") + 1);
+            datasend.type = SAY;
+            // Zero message container, fill it with the input, send it
+            bzero(datasend.message, MESSAGE_LEN);
+            strncpy(datasend.message, temp_string.c_str(), temp_string.length());
+            char* serialized_msg = serialize(datasend);
+            int s_val = send(c_fd, serialized_msg, 1024, 0);
+            if(s_val == -1){
+                perror("send");
+                exit(EXIT_FAILURE);
+            }
+            delete[] serialized_msg;
         }
-        delete[] serialized_msg;
+        
         getline(cin, input);
     }
     datasend.type = GOODBYE;
