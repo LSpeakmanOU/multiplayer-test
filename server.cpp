@@ -116,9 +116,6 @@ int main(int argc, char* argv[]){
                             new_msg->type = GOODBYE_ACK_MSG;
                             new_msg->from = curr_fd;
                             SocketIO::send_msg(curr_fd, *new_msg);
-                            // Send goodbye message to all players
-                            new_msg->type = GOODBYE_MSG;
-                            SocketIO::broadcast(curr_fd, clients, new_msg);
                             break;
                         case ENTER_MSG:
                             // Update player's location

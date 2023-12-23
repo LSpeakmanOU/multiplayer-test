@@ -28,8 +28,8 @@ struct player_data{
 string get_location(int loc);
 int get_loc_id(string loc);
 int get_action(string loc);
-void who(const map<int, player_data> &players);
-void help();
+string who(const map<int, player_data> &players);
+string help();
 
 
 const string village_overview = "A small village with a mage shop.";
@@ -82,7 +82,7 @@ const vector<string> robe_dialogue = {
     "."
 };
 
-void help(){
+string help(){
     string temp;
     temp += "=============================\n";
     temp += "Here is the list of commands available:\n";
@@ -93,8 +93,7 @@ void help(){
     temp += "help - lists available commands\n";
     temp += "exit - leave the game\n";
     temp += "=============================\n";
-    cout << temp;
-
+    return temp;
 }
 
 vector<string> get_inspects(int loc_id){
@@ -109,7 +108,7 @@ vector<string> get_inspects(int loc_id){
     }
 }
 
-void inspect(string inspected){
+string inspect(string inspected){
     string temp;
     temp += "=============================\n";
     if(inspected == "mage store"){
@@ -132,7 +131,7 @@ void inspect(string inspected){
         robe_dialogue[2] + magic_trim_materials[trim_mat_idx] + robe_dialogue[3] + magic_trims[trim_idx] + "\n";
     }
     temp += "=============================\n";
-    cout << temp;
+    return temp;
 }
 vector<string> enter_options(int loc_id){
     switch(loc_id){
@@ -145,7 +144,7 @@ vector<string> enter_options(int loc_id){
             return vector<string>{"village"};
     }
 }
-void look(int loc_id){
+string look(int loc_id){
     string temp;
     temp += "=============================\n";
     switch(loc_id){
@@ -173,16 +172,16 @@ void look(int loc_id){
     for(int i = 0;i<options.size();i++)
         temp += options[i] + "\n";
     temp += "=============================\n";
-    cout << temp;
+    return temp;
 }
-void who(const map<int, player_data> &players){
+string who(const map<int, player_data> &players){
     string temp;
     temp += "=============================\n";
     for(const auto& p : players){
         temp += p.second.name + "\t" + get_location(p.second.location) + "\n";
     }
     temp += "=============================\n";
-    cout << temp;
+    return temp;
 }
 
 int get_action(string loc){

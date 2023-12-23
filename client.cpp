@@ -1,14 +1,25 @@
 #include <iostream>
 #include <cstring> // strncpy
 #include <thread>
+#include <mutex>
 #include <map>
 #include <vector>
+#include <stdlib.h>
 #include "message_format.h"
 #include "game_context.h"
 #include "socket_io.h"
+#define LINUX
 
 using namespace std;
 bool Running = true;
+std::mutex mtx; 
+
+void increase_msg_log(vector<string> &message_log, string target){
+    mtx.lock();
+    message_log.push_back(target);
+    cout << target;
+    mtx.unlock();
+}
 vector<string> collect_tokens(const string &input_str){
     vector<string> result;
     string curr_str = input_str;
@@ -21,7 +32,7 @@ vector<string> collect_tokens(const string &input_str){
     result.push_back(curr_str);
     return result;
 }
-void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
+void listen_to_server_traffic(int c_fd, map<int, player_data> &players, vector<string> &message_log){
     char buffer[1024] = { 0 };
     bool msg_size_gzero;
     string temp_string;
@@ -39,7 +50,7 @@ void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
                 for(int i = 0;i<MESSAGE_LEN;i++)
                     temp_string += new_msg->message[i];
                 temp_string += "\n";
-                cout << temp_string;
+                increase_msg_log(message_log, temp_string);
                 break;
             case INTRO_MSG:
                 players[new_msg->from] = player_data();
@@ -52,7 +63,7 @@ void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
             case GOODBYE_MSG: // SOMEONE ELSE
                 temp_string = "";
                 temp_string += "Player: " + players[new_msg->from].name + " Has disconnected!\n";
-                cout << temp_string;
+                increase_msg_log(message_log, temp_string);
                 players.erase(new_msg->from);
                 break;
             case GOODBYE_ACK_MSG: // END THREAD
@@ -67,6 +78,7 @@ void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
     }
 }
 int main(int argc, char* argv[]){
+    vector<string> message_log;
     map<int, player_data> players;
     packet datasend;
     player_data my_data;
@@ -74,7 +86,7 @@ int main(int argc, char* argv[]){
     bzero(datasend.message, MESSAGE_LEN);
     
     int c_fd = SocketIO::create_client_socket();
-    thread server_listener(listen_to_server_traffic, c_fd, ref(players));
+    thread server_listener(listen_to_server_traffic, c_fd, ref(players), ref(message_log));
     string input;
     // First ask user what their name is upon logging in
     datasend.type = INTRO_MSG;
@@ -82,8 +94,8 @@ int main(int argc, char* argv[]){
     getline(cin, input);
     strncpy(datasend.message, input.c_str(), input.length());
     SocketIO::send_msg(c_fd,datasend);
-
     my_data.name = input;
+    increase_msg_log(message_log, "Welcome to <NAME> " + my_data.name + "!\n");
     getline(cin, input);
     string temp_string;
     char temp_byte_arr[4];
@@ -100,6 +112,7 @@ int main(int argc, char* argv[]){
                 bzero(datasend.message, MESSAGE_LEN);
                 strncpy(datasend.message, temp_string.c_str(), temp_string.length());
                 SocketIO::send_msg(c_fd, datasend);
+                increase_msg_log(message_log, my_data.name + ": " + temp_string + "\n");
                 break;
             case INSPECT_ACTION:
             {
@@ -109,7 +122,7 @@ int main(int argc, char* argv[]){
                 vector<string> inspects = get_inspects(my_data.location);
                 for(int i = 0; i<inspects.size();i++){
                     if(temp_string == inspects[i]){
-                        inspect(temp_string);
+                        increase_msg_log(message_log, inspect(temp_string));
                     }
                 }
                 break;
@@ -132,19 +145,18 @@ int main(int argc, char* argv[]){
                 break;
             }
             case LOOK_ACTION:
-                look(my_data.location);
+                increase_msg_log(message_log, look(my_data.location));
                 break;
             case HELP_ACTION:
-                help();
+                increase_msg_log(message_log, help());
                 break;
             case WHO_ACTION:
-                who(players);
+                increase_msg_log(message_log, who(players));
                 break;
             case INVALID_ACTION:
             default:
                 break;
         }
-        
         getline(cin, input);
     }
     datasend.type = GOODBYE_MSG;
