@@ -24,6 +24,7 @@ vector<string> collect_tokens(const string &input_str){
 void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
     char buffer[1024] = { 0 };
     bool msg_size_gzero;
+    string temp_string;
     while(Running){
         bzero(buffer, 1024); // zero buffer
         msg_size_gzero = SocketIO::recv_msg(c_fd, buffer, 1024);
@@ -33,11 +34,13 @@ void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
             packet* new_msg = SocketIO::deserialize(buffer);
             switch(new_msg->type){
             case SAY_MSG:
-                cout << players[new_msg->from].name << ": ";
+                temp_string = "";
+                temp_string += players[new_msg->from].name + ": ";
                 for(int i = 0;i<MESSAGE_LEN;i++)
-                    cout << new_msg->message[i];
-                    cout << endl;
-                    break;
+                    temp_string += new_msg->message[i];
+                temp_string += "\n";
+                cout << temp_string;
+                break;
             case INTRO_MSG:
                 players[new_msg->from] = player_data();
                 //players[new_msg->from] = new player_data;
@@ -47,7 +50,9 @@ void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
                 players[new_msg->from].location = SocketIO::deserialize_int(new_msg->message);
                 break;
             case GOODBYE_MSG: // SOMEONE ELSE
-                cout << "Player: " << players[new_msg->from].name << " Has disconnected!" << endl;
+                temp_string = "";
+                temp_string += "Player: " + players[new_msg->from].name + " Has disconnected!\n";
+                cout << temp_string;
                 players.erase(new_msg->from);
                 break;
             case GOODBYE_ACK_MSG: // END THREAD

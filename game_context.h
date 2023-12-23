@@ -83,15 +83,18 @@ const vector<string> robe_dialogue = {
 };
 
 void help(){
-    cout << "=============================" << endl;
-    cout << "Here is the list of commands available:" << endl;
-    cout << "say <message> - sends a message to all users in the space" << endl;
-    cout << "inspect <object/area> - allows to inspect items/areas within a given location" << endl;\
-    cout << "enter <location> - moves player into a different location" << endl;
-    cout << "look - describes the area you are in" << endl;
-    cout << "help - lists available commands" << endl;
-    cout << "exit - leave the game" << endl;
-    cout << "=============================" << endl;
+    string temp;
+    temp += "=============================\n";
+    temp += "Here is the list of commands available:\n";
+    temp += "say <message> - sends a message to all users in the space\n";
+    temp += "inspect <object/area> - allows to inspect items/areas within a given location\n";
+    temp += "enter <location> - moves player into a different location\n";
+    temp += "look - describes the area you are in\n";
+    temp += "help - lists available commands\n";
+    temp += "exit - leave the game\n";
+    temp += "=============================\n";
+    cout << temp;
+
 }
 
 vector<string> get_inspects(int loc_id){
@@ -107,27 +110,29 @@ vector<string> get_inspects(int loc_id){
 }
 
 void inspect(string inspected){
-    cout << "=============================" << endl;
+    string temp;
+    temp += "=============================\n";
     if(inspected == "mage store"){
-       cout << mage_store_overview << endl;
+       temp += mage_store_overview + "\n";
     }else if(inspected == "orb"){
         srand (time(NULL));
         int idx = rand() % MAGIC_OPTIONS;
-        cout << orb_dialogue[idx] << endl;
+        temp += orb_dialogue[idx] + "\n";
     }else if(inspected == "wand"){
         srand (time(NULL));
         int idx = rand() % MAGIC_OPTIONS;
-        cout << wand_dialogue[idx] << endl;
+        temp += wand_dialogue[idx] + "\n";
     }else if(inspected == "robe"){
         srand (time(NULL));
         int color_idx = rand() % magic_colors.size();
         int adj_idx = rand() % magic_adjectives.size();
         int trim_mat_idx = rand() % magic_trim_materials.size();
         int trim_idx = rand() % magic_trims.size();
-        cout << robe_dialogue[0] << magic_colors[color_idx] << robe_dialogue[1] << magic_adjectives[adj_idx] <<
-        robe_dialogue[2] << magic_trim_materials[trim_mat_idx] << robe_dialogue[3] << magic_trims[trim_idx] << endl;
+        temp += robe_dialogue[0] + magic_colors[color_idx] + robe_dialogue[1] + magic_adjectives[adj_idx] +
+        robe_dialogue[2] + magic_trim_materials[trim_mat_idx] + robe_dialogue[3] + magic_trims[trim_idx] + "\n";
     }
-    cout << "=============================" << endl;
+    temp += "=============================\n";
+    cout << temp;
 }
 vector<string> enter_options(int loc_id){
     switch(loc_id){
@@ -141,39 +146,43 @@ vector<string> enter_options(int loc_id){
     }
 }
 void look(int loc_id){
-    cout << "=============================" << endl;
+    string temp;
+    temp += "=============================\n";
     switch(loc_id){
         case VILLAGE:
-            cout << village_overview << endl;
+           temp += village_overview + "\n";
             break;
         case MAGE_STORE:
-            cout << mage_store_overview << endl;
+            temp += mage_store_overview + "\n";
             break;
         case INVALID_LOCATION:
         default:
-            cout << "Somehow you have entered the void. You feel disoriented as you "
+            temp += "Somehow you have entered the void. You feel disoriented as you "
             "float in an expanse of gray. Bolts of light whiz by you. Despite never being here"
             "You feel as if letting these bolts touch you could permanantly change and damage you. "
-            "Might be best to try and get out of here." << endl;
+            "Might be best to try and get out of here.\n";
             break;
     }
-    cout << "Here is what you can inspect around you:" << endl;
+    temp += "Here is what you can inspect around you:\n";
     vector<string> inspects = get_inspects(loc_id);
     vector<string> options = enter_options(loc_id);
     for(int i = 0;i<inspects.size();i++)
-        cout << inspects[i] << endl;
+        temp += inspects[i] + "\n";
     
-    cout << "Here is what locations you can see:" << endl;
+    temp += "Here is what locations you can see:\n";
     for(int i = 0;i<options.size();i++)
-        cout << options[i] << endl;
-    cout << "=============================" << endl;
+        temp += options[i] + "\n";
+    temp += "=============================\n";
+    cout << temp;
 }
 void who(const map<int, player_data> &players){
-    cout << "=============================" << endl;
+    string temp;
+    temp += "=============================\n";
     for(const auto& p : players){
-        cout << p.second.name << "\t" << get_location(p.second.location) << endl;
+        temp += p.second.name + "\t" + get_location(p.second.location) + "\n";
     }
-    cout << "=============================" << endl;
+    temp += "=============================\n";
+    cout << temp;
 }
 
 int get_action(string loc){
