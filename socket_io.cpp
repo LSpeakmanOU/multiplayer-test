@@ -42,6 +42,18 @@ namespace SocketIO{
         }
         return s_fd;
     }
+    void close_client_socket(int c_fd){
+        // closing the connected socket
+        close(c_fd);
+    }
+    bool recieve_message(int fd, char* buffer, int buff_len){
+        ssize_t buff_msg_size = read(fd, buffer, 1024);
+        if(buff_msg_size == -1){
+            perror("read");
+            exit(EXIT_FAILURE);
+        }
+        return buff_msg_size > 0;
+    }
     void send_msg(int to_fd, packet &msg){
         char* msg_to_send = serialize(msg);
         int send_val = send(to_fd, msg_to_send, 1024, 0);

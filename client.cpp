@@ -23,45 +23,41 @@ vector<string> collect_tokens(const string &input_str){
 }
 void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
     char buffer[1024] = { 0 };
-    ssize_t buff_msg_size;
+    bool msg_size_gzero;
     while(Running){
         bzero(buffer, 1024); // zero buffer
-        buff_msg_size = read(c_fd, buffer, 1024);
-        if(buff_msg_size == -1){
-            perror("read");
-            exit(EXIT_FAILURE);
-        }
+        msg_size_gzero = SocketIO::recieve_message(c_fd, buffer, 1024);
         // Handle message if length is greater than zero, otherwise the client disconnected
-        if(buff_msg_size > 0){
-        // Deserialize message, process it, then delete it
-        packet* new_msg = SocketIO::deserialize(buffer);
-        switch(new_msg->type){
-        case SAY_MSG:
-            cout << players[new_msg->from].name << ": ";
-            for(int i = 0;i<MESSAGE_LEN;i++)
-                cout << new_msg->message[i];
-                cout << endl;
+        if(msg_size_gzero){
+            // Deserialize message, process it, then delete it
+            packet* new_msg = SocketIO::deserialize(buffer);
+            switch(new_msg->type){
+            case SAY_MSG:
+                cout << players[new_msg->from].name << ": ";
+                for(int i = 0;i<MESSAGE_LEN;i++)
+                    cout << new_msg->message[i];
+                    cout << endl;
+                    break;
+            case INTRO_MSG:
+                players[new_msg->from] = player_data();
+                //players[new_msg->from] = new player_data;
+                players[new_msg->from].name = string(new_msg->message);
                 break;
-        case INTRO_MSG:
-            players[new_msg->from] = player_data();
-            //players[new_msg->from] = new player_data;
-            players[new_msg->from].name = string(new_msg->message);
-            break;
-        case ENTER_MSG:
-            players[new_msg->from].location = SocketIO::deserialize_int(new_msg->message);
-            break;
-        case GOODBYE_MSG: // SOMEONE ELSE
-            cout << "Player: " << players[new_msg->from].name << " Has disconnected!" << endl;
-            players.erase(new_msg->from);
-            break;
-        case GOODBYE_ACK_MSG: // END THREAD
-            return;
-        default:
-            break;
-        }
-        // Delete deserialized object
-        delete[] new_msg->message;
-        delete new_msg;
+            case ENTER_MSG:
+                players[new_msg->from].location = SocketIO::deserialize_int(new_msg->message);
+                break;
+            case GOODBYE_MSG: // SOMEONE ELSE
+                cout << "Player: " << players[new_msg->from].name << " Has disconnected!" << endl;
+                players.erase(new_msg->from);
+                break;
+            case GOODBYE_ACK_MSG: // END THREAD
+                return;
+            default:
+                break;
+            }
+            // Delete deserialized object
+            delete[] new_msg->message;
+            delete new_msg;
         }
     }
 }
@@ -71,9 +67,6 @@ int main(int argc, char* argv[]){
     player_data my_data;
     datasend.message = (char*)malloc(MESSAGE_LEN);
     bzero(datasend.message, MESSAGE_LEN);
-    
-
-    string hello = "Hello from client";
     
     int c_fd = SocketIO::create_client_socket();
     thread server_listener(listen_to_server_traffic, c_fd, ref(players));
@@ -157,7 +150,6 @@ int main(int argc, char* argv[]){
     cout << "Goodbye!" << endl;
     Running=false;
     server_listener.join();
-    // closing the connected socket
-    close(c_fd);
+    SocketIO::close_client_socket(c_fd);
     return EXIT_SUCCESS;
 }

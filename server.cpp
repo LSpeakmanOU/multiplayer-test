@@ -27,7 +27,7 @@ int main(int argc, char* argv[]){
     socklen_t addrlen = sizeof(temp_address);
     fd_set readfds;
     char buffer[1024] = { 0 };
-    ssize_t buff_msg_size;
+    bool msg_size_gzero;
     string hello = "Hello from server";
     int new_c_fd;
     vector<int> clients;
@@ -91,13 +91,9 @@ int main(int argc, char* argv[]){
             if(FD_ISSET(curr_fd, &readfds)){
                 // Unwrap message, if size = 0 then you are closing, otherwise its a message
                 bzero(buffer, 1024); // zero buffer
-                buff_msg_size = read(curr_fd, buffer, 1024);
-                if(buff_msg_size == -1){
-                    perror("read");
-                    exit(EXIT_FAILURE);
-                }
+                msg_size_gzero = SocketIO::recieve_message(curr_fd, buffer, 1024);
                 // Handle message if length is greater than zero, otherwise the client disconnected
-                if(buff_msg_size > 0){
+                if(msg_size_gzero){
                     // Deserialize message, process it, then delete it
                     packet* new_msg = SocketIO::deserialize(buffer);
                     switch(new_msg->type){
@@ -138,7 +134,7 @@ int main(int argc, char* argv[]){
                     delete new_msg;
                     
                 }
-                if(buff_msg_size == 0)
+                if(!msg_size_gzero)
                     handle_disconnect(curr_fd, i, temp_address, addrlen, clients, players);
             }
         }
