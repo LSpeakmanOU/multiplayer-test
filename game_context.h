@@ -2,7 +2,8 @@
 #define CONTEXT_H
 #include <string>
 #include <map>
-
+#include <random>
+#include <time.h>
 using namespace std;
 
 enum locations{
@@ -60,7 +61,7 @@ const string orb_dialogue[MAGIC_OPTIONS] = {
     "Approaching the orb, you feel yourself becoming intertwined with the essence of everything around you. From "
     "the pulsing of the blood through your body down to the smallest creatures in the dirt below the shop. You "
     "feel your clarity in the energies around you increase as you approach the orb. Staring at the glass sphere, "
-    "the orb potrays a scene of opalescent shimmers amidst a pearl-esc background."
+    "the orb portrays a scene of opalescent shimmers amidst a pearl-esc background."
 };
 const string wand_dialogue[MAGIC_OPTIONS] = {
     "Passing through the aisle of wands, a redwood wand vibrates with energy and emits yellow sparks. You hear "
@@ -103,6 +104,30 @@ vector<string> get_inspects(int loc_id){
         default:
             return vector<string>{"bolts of light"};
     }
+}
+
+void inspect(string inspected){
+    cout << "=============================" << endl;
+    if(inspected == "mage store"){
+       cout << mage_store_overview << endl;
+    }else if(inspected == "orb"){
+        srand (time(NULL));
+        int idx = rand() % MAGIC_OPTIONS;
+        cout << orb_dialogue[idx] << endl;
+    }else if(inspected == "wand"){
+        srand (time(NULL));
+        int idx = rand() % MAGIC_OPTIONS;
+        cout << wand_dialogue[idx] << endl;
+    }else if(inspected == "robe"){
+        srand (time(NULL));
+        int color_idx = rand() % magic_colors.size();
+        int adj_idx = rand() % magic_adjectives.size();
+        int trim_mat_idx = rand() % magic_trim_materials.size();
+        int trim_idx = rand() % magic_trims.size();
+        cout << robe_dialogue[0] << magic_colors[color_idx] << robe_dialogue[1] << magic_adjectives[adj_idx] <<
+        robe_dialogue[2] << magic_trim_materials[trim_mat_idx] << robe_dialogue[3] << magic_trims[trim_idx] << endl;
+    }
+    cout << "=============================" << endl;
 }
 vector<string> enter_options(int loc_id){
     switch(loc_id){

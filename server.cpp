@@ -9,6 +9,7 @@
 #include <string.h>
 #include "message_format.h"
 #include "game_context.h"
+#include "socket_io.h"
 
 using namespace std;
 
@@ -19,19 +20,6 @@ void handle_disconnect(int fd, int fd_idx, sockaddr_in &temp_address, socklen_t 
     clients.erase(clients.begin()+fd_idx);
     // Delete player data
     players.erase(players.begin()+fd_idx);
-}
-void broadcast(int source_fd, const vector<int> &clients, packet* msg){
-    char* msg_to_send = serialize(*msg);
-    for(int i = 0;i<clients.size();i++){
-        if(clients[i] != source_fd){
-            int send_val = send(clients[i], msg_to_send, 1024, 0);
-            if(send_val == -1){
-                perror("send");
-                exit(EXIT_FAILURE);
-            }
-        }
-    }   
-    delete[] msg_to_send;
 }
 
 int main(int argc, char* argv[]){
@@ -109,7 +97,7 @@ int main(int argc, char* argv[]){
                 datasend.from = clients[i];
                 bzero(datasend.message, MESSAGE_LEN);
                 strncpy(datasend.message, players[i].name.c_str(), players[i].name.length());
-                send_msg(new_c_fd, datasend);
+                SocketIO::send_msg(new_c_fd, datasend);
             }
             // Add to client FD list and add new player data object
             clients.push_back(new_c_fd);
@@ -133,7 +121,7 @@ int main(int argc, char* argv[]){
                 // Handle message if length is greater than zero, otherwise the client disconnected
                 if(buff_msg_size > 0){
                     // Deserialize message, process it, then delete it
-                    packet* new_msg = deserialize(buffer);
+                    packet* new_msg = SocketIO::deserialize(buffer);
                     switch(new_msg->type){
                         case SAY_MSG:
                             cout << players[i].name << ": ";
@@ -141,29 +129,29 @@ int main(int argc, char* argv[]){
                                 cout << new_msg->message[i];
                             cout << endl;
                             new_msg->from = curr_fd;
-                            broadcast(curr_fd, clients, new_msg);
+                            SocketIO::broadcast(curr_fd, clients, new_msg);
                             break;
                         case INTRO_MSG:
                             players[i].name = string(new_msg->message);
                             new_msg->from = curr_fd;
-                            broadcast(curr_fd, clients, new_msg);
+                            SocketIO::broadcast(curr_fd, clients, new_msg);
                             break;
                         case GOODBYE_MSG:
                             // Acknowledge player's exit message
                             // Used in killing player's application
                             new_msg->type = GOODBYE_ACK_MSG;
                             new_msg->from = curr_fd;
-                            send_msg(curr_fd, *new_msg);
+                            SocketIO::send_msg(curr_fd, *new_msg);
                             // Send goodbye message to all players
                             new_msg->type = GOODBYE_MSG;
-                            broadcast(curr_fd, clients, new_msg);
+                            SocketIO::broadcast(curr_fd, clients, new_msg);
                             break;
                         case ENTER_MSG:
                             // Update player's location
-                            players[i].location = deserialize_int(new_msg->message);
+                            players[i].location = SocketIO::deserialize_int(new_msg->message);
                             // Update all players' location information for current player
                             new_msg->from = curr_fd;
-                            broadcast(curr_fd, clients, new_msg);
+                            SocketIO::broadcast(curr_fd, clients, new_msg);
                         default:
                             break;
                     }

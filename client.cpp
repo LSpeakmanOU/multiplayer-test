@@ -9,6 +9,7 @@
 #include <vector>
 #include "message_format.h"
 #include "game_context.h"
+#include "socket_io.h"
 
 using namespace std;
 bool Running = true;
@@ -37,7 +38,7 @@ void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
         // Handle message if length is greater than zero, otherwise the client disconnected
         if(buff_msg_size > 0){
         // Deserialize message, process it, then delete it
-        packet* new_msg = deserialize(buffer);
+        packet* new_msg = SocketIO::deserialize(buffer);
         switch(new_msg->type){
         case SAY_MSG:
             cout << players[new_msg->from].name << ": ";
@@ -51,7 +52,7 @@ void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
             players[new_msg->from].name = string(new_msg->message);
             break;
         case ENTER_MSG:
-            players[new_msg->from].location = deserialize_int(new_msg->message);
+            players[new_msg->from].location = SocketIO::deserialize_int(new_msg->message);
             break;
         case GOODBYE_MSG: // SOMEONE ELSE
             cout << "Player: " << players[new_msg->from].name << " Has disconnected!" << endl;
@@ -98,7 +99,7 @@ int main(int argc, char* argv[]){
     cout << "What is your name?" << endl;
     getline(cin, input);
     strncpy(datasend.message, input.c_str(), input.length());
-    send_msg(c_fd,datasend);
+    SocketIO::send_msg(c_fd,datasend);
 
     my_data.name = input;
     getline(cin, input);
@@ -116,10 +117,21 @@ int main(int argc, char* argv[]){
                 // Zero message container, fill it with the input, send it
                 bzero(datasend.message, MESSAGE_LEN);
                 strncpy(datasend.message, temp_string.c_str(), temp_string.length());
-                send_msg(c_fd, datasend);
+                SocketIO::send_msg(c_fd, datasend);
                 break;
             case INSPECT_ACTION:
+            {
+                if(tokens.size() == 1)
+                    continue;
+                temp_string = input.substr(input.find(" ") + 1);
+                vector<string> inspects = get_inspects(my_data.location);
+                for(int i = 0; i<inspects.size();i++){
+                    if(temp_string == inspects[i]){
+                        inspect(temp_string);
+                    }
+                }
                 break;
+            }
             case ENTER_ACTION:
             {
                 if(tokens.size() == 1)
@@ -131,10 +143,10 @@ int main(int argc, char* argv[]){
                 my_data.location = loc_id;
                 datasend.type = ENTER_MSG;
                 bzero(datasend.message, MESSAGE_LEN);
-                serialize_int(temp_byte_arr, loc_id);
+                SocketIO::serialize_int(temp_byte_arr, loc_id);
                 // Send 1 int over as the message(location)
                 strncpy(datasend.message, temp_byte_arr, 4);
-                send_msg(c_fd, datasend);
+                SocketIO::send_msg(c_fd, datasend);
                 break;
             }
             case LOOK_ACTION:
@@ -155,7 +167,7 @@ int main(int argc, char* argv[]){
     }
     datasend.type = GOODBYE_MSG;
     bzero(datasend.message, MESSAGE_LEN);
-    send_msg(c_fd, datasend);
+    SocketIO::send_msg(c_fd, datasend);
     
     delete[] datasend.message;
     cout << "Goodbye!" << endl;
