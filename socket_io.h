@@ -11,7 +11,7 @@ namespace SocketIO{
     int create_client_socket();
     int create_server_socket(sockaddr_in &temp_address,socklen_t &addrlen);
     void close_client_socket(int c_fd);
-    bool recieve_message(int fd, char* buffer, int buff_len);
+    bool recv_msg(int fd, char* buffer, int buff_len);
     void send_msg(int to_fd, packet &msg);
     void broadcast(int source_fd, const vector<int> &clients, packet* msg);
     void serialize_int(char* bytes, int val);

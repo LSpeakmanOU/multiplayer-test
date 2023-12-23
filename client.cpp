@@ -26,7 +26,7 @@ void listen_to_server_traffic(int c_fd, map<int, player_data> &players){
     bool msg_size_gzero;
     while(Running){
         bzero(buffer, 1024); // zero buffer
-        msg_size_gzero = SocketIO::recieve_message(c_fd, buffer, 1024);
+        msg_size_gzero = SocketIO::recv_msg(c_fd, buffer, 1024);
         // Handle message if length is greater than zero, otherwise the client disconnected
         if(msg_size_gzero){
             // Deserialize message, process it, then delete it

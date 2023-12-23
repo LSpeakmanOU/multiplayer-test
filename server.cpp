@@ -91,7 +91,7 @@ int main(int argc, char* argv[]){
             if(FD_ISSET(curr_fd, &readfds)){
                 // Unwrap message, if size = 0 then you are closing, otherwise its a message
                 bzero(buffer, 1024); // zero buffer
-                msg_size_gzero = SocketIO::recieve_message(curr_fd, buffer, 1024);
+                msg_size_gzero = SocketIO::recv_msg(curr_fd, buffer, 1024);
                 // Handle message if length is greater than zero, otherwise the client disconnected
                 if(msg_size_gzero){
                     // Deserialize message, process it, then delete it

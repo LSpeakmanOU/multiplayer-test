@@ -46,7 +46,7 @@ namespace SocketIO{
         // closing the connected socket
         close(c_fd);
     }
-    bool recieve_message(int fd, char* buffer, int buff_len){
+    bool recv_msg(int fd, char* buffer, int buff_len){
         ssize_t buff_msg_size = read(fd, buffer, 1024);
         if(buff_msg_size == -1){
             perror("read");
