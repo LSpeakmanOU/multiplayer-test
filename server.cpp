@@ -23,41 +23,19 @@ void handle_disconnect(int fd, int fd_idx, sockaddr_in &temp_address, socklen_t 
 }
 
 int main(int argc, char* argv[]){
-    int s_fd = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in temp_address;
+    socklen_t addrlen = sizeof(temp_address);
     fd_set readfds;
-    const int enable = 1;
-    setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)); // allow to bind to TIME_WAIT port
-    if(s_fd == -1){
-        perror("socket");
-        exit(EXIT_FAILURE);
-    }
     char buffer[1024] = { 0 };
     ssize_t buff_msg_size;
     string hello = "Hello from server";
-
     int new_c_fd;
-    sockaddr_in temp_address;
-    socklen_t addrlen = sizeof(temp_address);
-
-    temp_address.sin_family = AF_INET;
-    temp_address.sin_addr.s_addr = inet_addr("127.0.0.1");
-	temp_address.sin_port = htons(25565);
     vector<int> clients;
     vector<player_data> players;
     packet datasend;
     datasend.message = (char*)malloc(MESSAGE_LEN);
     bzero(datasend.message, MESSAGE_LEN);
-
-    int b_val = bind(s_fd, (sockaddr *)&temp_address, sizeof(temp_address));
-    if(b_val == -1){
-        perror("bind");
-        exit(EXIT_FAILURE);
-    }
-    int l_val = listen(s_fd, 10); // 3 simultaneous connection queue
-    if(l_val == -1){
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
+    int s_fd = SocketIO::create_server_socket(temp_address, addrlen);
     int max_fd;
     int curr_fd;
     int active_fds;

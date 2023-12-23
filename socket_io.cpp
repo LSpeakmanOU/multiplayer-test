@@ -1,5 +1,47 @@
 #include "socket_io.h"
 namespace SocketIO{
+    int create_client_socket(){
+        int c_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if(c_fd == -1){
+            perror("socket");
+            exit(EXIT_FAILURE);
+        }
+        sockaddr_in server;
+        server.sin_family = AF_INET;
+        server.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+        server.sin_port = htons(25565);
+        int status = connect(c_fd, (struct sockaddr*)&server, sizeof(server));
+        if(status == -1){
+            perror("connect");
+            exit(EXIT_FAILURE);
+        }
+        return c_fd;
+    }
+    int create_server_socket(sockaddr_in &temp_address,socklen_t &addrlen){
+        int s_fd = socket(AF_INET, SOCK_STREAM, 0);
+        
+        const int enable = 1;
+        setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)); // allow to bind to TIME_WAIT port
+        if(s_fd == -1){
+            perror("socket");
+            exit(EXIT_FAILURE);
+        }
+        temp_address.sin_family = AF_INET;
+        temp_address.sin_addr.s_addr = inet_addr("127.0.0.1");
+        temp_address.sin_port = htons(25565);
+         int b_val = bind(s_fd, (sockaddr *)&temp_address, sizeof(temp_address));
+        if(b_val == -1){
+            perror("bind");
+            exit(EXIT_FAILURE);
+        }
+        int l_val = listen(s_fd, 10); // 3 simultaneous connection queue
+        if(l_val == -1){
+            perror("listen");
+            exit(EXIT_FAILURE);
+        }
+        return s_fd;
+    }
     void send_msg(int to_fd, packet &msg){
         char* msg_to_send = serialize(msg);
         int send_val = send(to_fd, msg_to_send, 1024, 0);

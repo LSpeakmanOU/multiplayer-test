@@ -1,9 +1,5 @@
 #include <iostream>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <cstring>
-#include <strings.h>
+#include <cstring> // strncpy
 #include <thread>
 #include <map>
 #include <vector>
@@ -75,23 +71,11 @@ int main(int argc, char* argv[]){
     player_data my_data;
     datasend.message = (char*)malloc(MESSAGE_LEN);
     bzero(datasend.message, MESSAGE_LEN);
-    int c_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if(c_fd == -1){
-        perror("socket");
-        exit(EXIT_FAILURE);
-    }
+    
 
     string hello = "Hello from client";
-    sockaddr_in server;
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    server.sin_port = htons(25565);
-    int status = connect(c_fd, (struct sockaddr*)&server, sizeof(server));
-    if(status == -1){
-        perror("connect");
-        exit(EXIT_FAILURE);
-    }
+    
+    int c_fd = SocketIO::create_client_socket();
     thread server_listener(listen_to_server_traffic, c_fd, ref(players));
     string input;
     // First ask user what their name is upon logging in
