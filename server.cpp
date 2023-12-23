@@ -134,8 +134,14 @@ int main(int argc, char* argv[]){
                     delete new_msg;
                     
                 }
-                if(!msg_size_gzero)
+                if(!msg_size_gzero){
                     handle_disconnect(curr_fd, i, temp_address, addrlen, clients, players);
+                    bzero(datasend.message, MESSAGE_LEN);
+                    // Send goodbye message to all players
+                    datasend.type = GOODBYE_MSG;
+                    datasend.from = curr_fd;
+                    SocketIO::broadcast(curr_fd, clients, &datasend);
+                }
             }
         }
     }
